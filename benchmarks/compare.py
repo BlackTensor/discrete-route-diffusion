@@ -2,7 +2,7 @@
 
 Compares the discrete diffusion model against classical baselines
 (nearest-neighbor, 2-opt, and OR-Tools when installed) on tour quality and
-runtime across many instances, then renders dark-themed Matplotlib charts.
+runtime across many instances, then renders parchment-themed Matplotlib charts.
 
 What is measured
 ----------------
@@ -48,18 +48,18 @@ from routediff.solvers import (
     two_opt,
 )
 
-# Dark theme matching the web UI.
-BACKGROUND = "#0d1117"
-PANEL = "#11161d"
-FOREGROUND = "#c9d1d9"
-MUTED = "#8b949e"
-GRID = "#21262d"
-ACCENT = "#2dd4bf"
-# A restrained, single-accent-derived palette for the per-method bars.
+# Parchment theme matching the cartographic web UI.
+BACKGROUND = "#f0e6d2"
+PANEL = "#f5ecd7"
+FOREGROUND = "#2d2a22"
+MUTED = "#6b6453"
+GRID = "#d8cbb0"
+ACCENT = "#ea580c"
+# A warm amber/terracotta palette for the per-method bars (no cool colors).
 METHOD_COLORS = {
-    "nearest_neighbor": "#6e7681",
-    "two_opt": "#3b82f6",
-    "or_tools": "#a78bfa",
+    "nearest_neighbor": "#d6b98c",
+    "two_opt": "#c2410c",
+    "or_tools": "#9a3412",
     "diffusion": ACCENT,
 }
 METHOD_LABELS = {
@@ -237,10 +237,12 @@ def write_csv(results: list[MethodResult], path: Path) -> None:
 
 
 def _style_axes(ax) -> None:
-    """Apply the shared dark theme to one Matplotlib axis."""
+    """Apply the shared parchment theme to one Matplotlib axis (clean, minimal)."""
     ax.set_facecolor(PANEL)
-    for spine in ax.spines.values():
-        spine.set_color(GRID)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color(MUTED)
     ax.tick_params(colors=MUTED, labelsize=9)
     ax.yaxis.label.set_color(FOREGROUND)
     ax.xaxis.label.set_color(FOREGROUND)
@@ -255,7 +257,7 @@ def render_charts(
     num_instances: int,
     num_cities: int,
 ) -> None:
-    """Render dark-themed quality and speed comparison charts to ``path``."""
+    """Render parchment-themed quality and speed comparison charts to ``path``."""
     import matplotlib
 
     matplotlib.use("Agg")
