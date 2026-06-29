@@ -1,0 +1,32 @@
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Model checkpoints and artifacts
+*.pt
+*.pth
+*.ckpt
+checkpoints/
+runs/
+logs/
+*.log
+
+# Generated timelines / outputs
+*.timeline.json
+outputs/
+benchmarks/results/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

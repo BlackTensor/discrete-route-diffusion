@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<!-- RouteDiff UI. Calm cartographic instrument. Two client-side pages: the
+     demo (route evolution) and an explanatory "How it works" page with the
+     analysis. Vanilla CSS, D3 v7 from CDN. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RouteDiff - Discrete Diffusion for Combinatorial Optimization</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <header class="masthead">
+      <div class="title-block">
+        <h1 class="title">RouteDiff</h1>
+        <p class="subtitle">Discrete Diffusion for Combinatorial Optimization</p>
+        <p class="attribution">Made by Shayan Ansari, 2026</p>
+      </div>
+      <nav class="masthead-nav">
+        <button id="to-about" class="btn btn-ghost" type="button">How it works</button>
+        <button id="to-demo" class="btn btn-ghost" type="button" hidden>Back to demo</button>
+      </nav>
+    </header>
+    <div class="masthead-rule" aria-hidden="true"></div>
+
+    <main class="pages">
+      <!-- ============================ PAGE 1 - DEMO ===================== -->
+      <section id="page-demo" class="page is-active" aria-label="Demo">
+        <div class="demo-layout">
+          <aside class="panel" aria-label="Controls">
+            <section class="group">
+              <h2 class="group-title">Instance</h2>
+              <label class="field" for="cities">
+                <span class="field-row">
+                  <span class="field-label">Cities</span>
+                  <span class="field-value mono" id="cities-value">15</span>
+                </span>
+                <input type="range" id="cities" min="10" max="25" step="1" value="15" />
+              </label>
+              <label class="field" for="seed">
+                <span class="field-label">Seed</span>
+                <input
+                  type="number"
+                  id="seed"
+                  class="text-input mono"
+                  placeholder="random"
+                  min="0"
+                />
+              </label>
+              <button class="btn btn-primary" id="generate" type="button">
+                Generate and denoise
+              </button>
+            </section>
+
+            <section class="group">
+              <h2 class="group-title">Playback</h2>
+              <div class="playback-row">
+                <button class="btn btn-soft" id="play" type="button" aria-label="Play">
+                  <svg class="icon icon-play" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M5 3.5v9l7-4.5z" />
+                  </svg>
+                  <svg class="icon icon-pause" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" />
+                  </svg>
+                  <span class="btn-label" id="play-label">Play</span>
+                </button>
+                <button class="btn btn-soft" id="restart" type="button">Restart</button>
+              </div>
+              <label class="field" for="step-slider">
+                <span class="field-row">
+                  <span class="field-label">Step</span>
+                  <span class="field-value mono" id="step-label">0 / 0</span>
+                </span>
+                <input type="range" id="step-slider" min="0" max="0" step="1" value="0" />
+              </label>
+              <div class="field">
+                <span class="field-label">Speed</span>
+                <div class="segmented" id="speed" role="group" aria-label="Playback speed">
+                  <button type="button" class="seg" data-speed="slow">Slow</button>
+                  <button type="button" class="seg is-active" data-speed="normal">Normal</button>
+                  <button type="button" class="seg" data-speed="fast">Fast</button>
+                </div>
+              </div>
+            </section>
+          </aside>
+
+          <section class="stage" aria-label="Route evolution">
+            <div class="stage-head">
+              <span class="stage-title">Route evolution</span>
+              <span class="stage-state mono" id="status">ready</span>
+            </div>
+            <div class="canvas-wrap">
+              <div class="lamp" aria-hidden="true"></div>
+              <svg id="route-canvas" role="img" aria-label="Animated TSP route"></svg>
+              <div class="canvas-hint" id="canvas-hint">
+                Generate an instance to watch the tour emerge from noise.
+              </div>
+            </div>
+            <div class="readout" aria-label="Run summary">
+              <div class="readout-item">
+                <span class="readout-label">Tour length</span>
+                <span class="readout-value mono" id="res-length">&mdash;</span>
+              </div>
+              <div class="readout-item">
+                <span class="readout-label">Inference</span>
+                <span class="readout-value mono" id="res-time">&mdash;</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ========================= PAGE 2 - HOW IT WORKS ================ -->
+      <section id="page-about" class="page" aria-label="How it works">
+        <article class="doc">
+          <section class="doc-block">
+            <h2>What this is</h2>
+            <p>
+              RouteDiff treats the Traveling Salesperson Problem as a denoising
+              task. Rather than building a tour step by step with a heuristic, it
+              learns to begin from a graph of pure noise and gradually remove that
+              noise until a short, valid round trip through every city emerges. It
+              is the idea behind image diffusion models, applied instead to a
+              discrete combinatorial object: the set of edges that form a tour.
+            </p>
+          </section>
+
+          <section class="doc-block">
+            <h2>The forward noising process</h2>
+            <p>
+              Training starts from a known good tour for each instance, produced
+              by a classical solver. A forward process then corrupts that tour
+              over a fixed number of timesteps using a discrete (D3PM-style) noise
+              kernel: at each step every edge has some chance of being resampled
+              at random, so a clean tour of N edges decays toward an essentially
+              random edge set. By the final timestep almost no trace of the
+              original route remains. This produces a ladder of progressively
+              noisier versions of each tour for the model to learn from.
+            </p>
+          </section>
+
+          <section class="doc-block">
+            <h2>The GNN denoiser</h2>
+            <p>
+              A graph neural network learns to undo one step of that corruption.
+              Given a noisy edge set, the city coordinates, and the current
+              timestep, it predicts for every possible edge the probability that
+              the edge belongs to the clean tour. Anisotropic gated graph
+              convolutions let each edge's prediction depend on the whole graph,
+              and a sinusoidal timestep embedding tells the network how much noise
+              to expect. The model is deliberately small enough to train on a CPU.
+            </p>
+          </section>
+
+          <section class="doc-block">
+            <h2>Sampling a tour from noise</h2>
+            <p>
+              To solve a new instance the model runs the process in reverse. It
+              starts from a random edge set and, from the last timestep down to
+              the first, repeatedly predicts the clean tour and takes a small
+              denoising step toward it. After the final step a greedy decoder
+              turns the per-edge probabilities into a single valid Hamiltonian
+              cycle, adding the most confident edges while rejecting any that would
+              break the tour. The animation on the demo page shows exactly these
+              intermediate states.
+            </p>
+          </section>
+
+          <section class="doc-block">
+            <h2>Benchmark: tour quality</h2>
+            <div class="viz-card">
+              <svg id="benchmark" role="img" aria-label="Benchmark comparison chart"></svg>
+            </div>
+            <p class="caption">
+              Mean tour length across many random 15-city instances; shorter is
+              better. The diffusion model clearly beats the nearest-neighbor
+              heuristic and approaches 2-opt local search, despite never being
+              given the optimization objective directly. The amber bar updates to
+              your most recent run on the demo page.
+            </p>
+          </section>
+
+          <section class="doc-block">
+            <h2>Optimality gap</h2>
+            <p>
+              On the most recent run, the diffusion tour measured
+              <span class="inline-stat mono" id="about-length">&mdash;</span>, which
+              is <span class="inline-stat mono" id="about-gap">&mdash;</span>
+              relative to the nearest-neighbor baseline of 4.018. A negative figure
+              means the learned model found a shorter route than the heuristic.
+            </p>
+          </section>
+
+          <section class="doc-block">
+            <h2>Training loss</h2>
+            <div class="viz-card">
+              <svg id="loss-curve" role="img" aria-label="Training loss curve"></svg>
+            </div>
+            <p class="caption">
+              Binary cross-entropy of the edge predictions over 250 training
+              epochs. The steady decline shows the denoiser learning to recover
+              clean tours from noised inputs; the curve flattening indicates it is
+              nearing the limit of what this model size extracts on CPU.
+            </p>
+          </section>
+
+          <section class="doc-block">
+            <h2>Edge confidence</h2>
+            <div class="viz-card heatmap-card">
+              <svg id="heatmap" role="img" aria-label="Edge confidence heatmap"></svg>
+              <p class="caption mono" id="heatmap-cap">generate a tour to populate this grid</p>
+            </div>
+            <p class="caption">
+              Each cell is the model's confidence that the edge between two cities
+              belongs in the final tour, at the end of denoising. Bright amber
+              cells are the edges the decoder commits to; the pale parchment
+              cells are the large majority of city pairs the model has ruled out.
+            </p>
+          </section>
+        </article>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

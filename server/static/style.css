@@ -1,0 +1,624 @@
+/* RouteDiff - an antique cartographic instrument.
+   Aged-paper parchment, ink, contour lines, terrain greens, one warm amber
+   route cutting through. Light, calm, readable. Vanilla CSS. */
+
+:root {
+  --bg: #f0e6d2; /* soft warm parchment, the color of an old map */
+  --bg-2: #ece0c8; /* deeper parchment for large fields */
+  --surface: #e4d5b7; /* panel / card surface, a touch deeper than the page */
+  --surface-2: #dccba8; /* raised control surface */
+  --line: #cdba94; /* soft taupe hairline, like a faint fold */
+  --line-strong: #c0ab83; /* firmer fold for emphasis */
+  --accent: #c2410c; /* burnt orange, the lit trail */
+  --accent-bright: #ea580c; /* brighter amber for hover / emphasis */
+  --tour: #ea580c; /* clean amber tour line */
+  --noise-edge: #9aa68c; /* faint contour-line gray-green */
+  --terrain: #4a5d3a; /* muted forest green */
+  --slate: #5b6b7a; /* dusty slate blue, water / contours */
+  --node: #2d2a22; /* deep ink survey point */
+  --node-ring: #f5ecd8; /* thin cream ring around each point */
+  --text: #2d2a22; /* deep forest-charcoal ink */
+  --text-muted: #7a6f57; /* warm taupe */
+  --text-faint: #9b8d70; /* lighter taupe */
+  --focus: rgba(194, 65, 12, 0.32);
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --serif: "Fraunces", Georgia, "Times New Roman", serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* .btn sets display, which would otherwise override the hidden attribute. */
+[hidden] {
+  display: none !important;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Masthead ---------------------------------------------------------- */
+
+.masthead {
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 28px 36px 18px;
+  animation: fade 600ms ease both;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 44px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.004em;
+  color: var(--text);
+}
+
+.subtitle {
+  margin: 9px 0 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.01em;
+}
+
+.attribution {
+  margin: 13px 0 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-faint);
+}
+
+.attribution::before {
+  content: "";
+  width: 36px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.6;
+}
+
+.masthead-nav {
+  padding-bottom: 6px;
+}
+
+/* Thin rule under the whole header block, giving it weight on both pages. */
+.masthead-rule {
+  flex: none;
+  height: 2px;
+  margin: 0 36px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0,
+    var(--accent) 64px,
+    var(--line) 64px,
+    var(--line) 100%
+  );
+  opacity: 0.55;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Pages ------------------------------------------------------------- */
+
+.pages {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.page {
+  display: none;
+  height: 100%;
+}
+
+.page.is-active {
+  display: block;
+  animation: fade 420ms ease both;
+}
+
+#page-demo.is-active {
+  display: flex;
+}
+
+#page-about {
+  overflow-y: auto;
+}
+
+/* ---- Demo layout ------------------------------------------------------- */
+
+.demo-layout {
+  display: grid;
+  grid-template-columns: 296px minmax(0, 1fr);
+  gap: 22px;
+  width: 100%;
+  height: 100%;
+  padding: 22px 36px 26px;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  overflow: hidden auto; /* never show a horizontal scrollbar */
+}
+
+/* ---- Control groups ---------------------------------------------------- */
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.group-title {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.field-label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.field-value {
+  font-size: 13px;
+  color: var(--text);
+}
+
+/* Inputs ---------------------------------------------------------------- */
+
+.text-input {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 9px 11px;
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.text-input::placeholder {
+  color: var(--text-faint);
+}
+
+.text-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--line);
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+}
+
+input[type="range"]:focus-visible {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* Buttons --------------------------------------------------------------- */
+
+.btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 14px;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  width: 100%;
+  color: #fbf3e2;
+  font-weight: 600;
+  background: var(--accent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: var(--accent-bright);
+}
+
+.btn-soft {
+  flex: 1;
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+
+.btn-soft:not(:disabled):hover {
+  border-color: var(--text-muted);
+}
+
+.btn-ghost {
+  color: var(--text-muted);
+  background: transparent;
+  border-color: var(--line);
+}
+
+.btn-ghost:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+.btn .icon {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+
+.icon-pause {
+  display: none;
+}
+
+#play[data-playing="true"] .icon-play {
+  display: none;
+}
+
+#play[data-playing="true"] .icon-pause {
+  display: inline;
+}
+
+.playback-row {
+  display: flex;
+  gap: 10px;
+}
+
+/* Segmented speed control ----------------------------------------------- */
+
+.segmented {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.seg {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 0;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease;
+}
+
+.seg:hover {
+  color: var(--text);
+}
+
+.seg.is-active {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+/* ---- Stage ------------------------------------------------------------- */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(45, 42, 34, 0.05);
+}
+
+.stage-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.stage-title {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.stage-state {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--bg-2);
+}
+
+/* A very soft warm pool of light, like a lamp over the map. */
+.lamp {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 46%,
+    rgba(234, 88, 12, 0.05),
+    transparent 58%
+  );
+  pointer-events: none;
+}
+
+#route-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.canvas-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-align: center;
+  max-width: 80%;
+  transition: opacity 320ms ease;
+}
+
+.canvas-hint.is-hidden {
+  opacity: 0;
+}
+
+.readout {
+  display: flex;
+  gap: 36px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--line);
+}
+
+.readout-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.readout-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.readout-value {
+  font-size: 22px;
+  color: var(--accent);
+}
+
+/* ---- How it works page ------------------------------------------------ */
+
+.doc {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 28px 80px;
+}
+
+.doc-block {
+  margin-bottom: 46px;
+}
+
+.doc-block h2 {
+  margin: 0 0 14px;
+  font-family: var(--serif);
+  font-size: 25px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  color: var(--text);
+}
+
+.doc-block p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1.78;
+}
+
+.inline-stat {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.viz-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  margin: 18px 0 14px;
+  box-shadow: 0 1px 3px rgba(45, 42, 34, 0.06);
+}
+
+.caption {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.heatmap-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+#benchmark {
+  width: 100%;
+  height: 168px;
+  display: block;
+}
+
+#loss-curve {
+  width: 100%;
+  height: 168px;
+  display: block;
+}
+
+#heatmap {
+  width: 264px;
+  max-width: 100%;
+  height: 264px;
+  display: block;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+#heatmap.is-visible {
+  opacity: 1;
+}
+
+.heatmap-card .caption {
+  text-align: center;
+}
+
+/* ---- D3 element styling ------------------------------------------------ */
+
+.bar-label,
+.bar-value,
+.loss-axis text,
+.axis-label {
+  font-family: var(--mono);
+  fill: var(--text-muted);
+  font-size: 10px;
+}
+
+.bar-value {
+  fill: var(--text);
+}
+
+.loss-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+}
+
+.loss-axis path,
+.loss-axis line {
+  stroke: var(--line);
+}
+
+/* ---- Responsive fallback ---------------------------------------------- */
+
+@media (max-width: 880px) {
+  body {
+    overflow: auto;
+    height: auto;
+  }
+  .title {
+    font-size: 36px;
+  }
+  .pages {
+    min-height: 0;
+  }
+  #page-demo.is-active {
+    display: block;
+  }
+  .demo-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .stage {
+    min-height: 460px;
+  }
+}
